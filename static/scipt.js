@@ -17,7 +17,7 @@ function toggleSwitch() {
     fetch('/toggle-led', {
         method: 'POST',
         headers: {
-        'Content-Type': 'application/json'
+            'Content-Type': 'application/json'
         },
         body: JSON.stringify({ state: switchState })
     })
@@ -39,7 +39,7 @@ function toggleFan() {
     fetch('/toggle-fan', {
         method: 'POST',
         headers: {
-        'Content-Type': 'application/json'
+            'Content-Type': 'application/json'
         },
         body: JSON.stringify({ state: fanSwitchState })
     });
@@ -48,45 +48,45 @@ function toggleFan() {
 // Function for to update LED state 
 function updateLEDState() {
     fetch('/led-state')
-    .then(response => response.json())
-    .then(data => {
-        switchState = data.led_state; // Update the LED switch state based on the server response
-        const lightbulb = document.getElementById('lightbulb');
+        .then(response => response.json())
+        .then(data => {
+            switchState = data.led_state; // Update the LED switch state based on the server response
+            const lightbulb = document.getElementById('lightbulb');
 
-        // Update lightbulb image based on switch state
-        if (switchState) {
-            lightbulb.src = '../static/lighton.png';
-            document.getElementById('switchLED').checked = true; // Set the checkbox to checked
-        } else {
-            lightbulb.src = '../static/lightoff.png';
-            switchLED.checked = false; // Set the checkbox to unchecked
-        }
-    })
-    .catch(error => console.error('Error fetching LED state:', error));
+            // Update lightbulb image based on switch state
+            if (switchState) {
+                lightbulb.src = '../static/lighton.png';
+                document.getElementById('switchLED').checked = true; // Set the checkbox to checked
+            } else {
+                lightbulb.src = '../static/lightoff.png';
+                switchLED.checked = false; // Set the checkbox to unchecked
+            }
+        })
+        .catch(error => console.error('Error fetching LED state:', error));
 }
 
 // Function to update the Fan state 
 function updateFanState() {
     fetch('/fan-state')
-    .then(response => response.json())
-    .then(data => {
-        fanSwitchState = data.fan_state; // Update the fanSwitchState based on the server response
-        const fanImage = document.getElementById('fan');
+        .then(response => response.json())
+        .then(data => {
+            fanSwitchState = data.fan_state; // Update the fanSwitchState based on the server response
+            const fanImage = document.getElementById('fan');
 
-        // Update fan image based on switch state
-        if (fanSwitchState) {
-            fanImage.src = '../static/fanon.png';
-            fanSwitch.checked = true; // Set the checkbox to checked
-        } else {
-            fanImage.src = '../static/fanoff.png';
-            fanSwitch.checked = false; // Set the checkbox to checked
-        }
-    })
-    .catch(error => console.error('Error fetching fan state:', error));
+            // Update fan image based on switch state
+            if (fanSwitchState) {
+                fanImage.src = '../static/fanon.png';
+                fanSwitch.checked = true; // Set the checkbox to checked
+            } else {
+                fanImage.src = '../static/fanoff.png';
+                fanSwitch.checked = false; // Set the checkbox to checked
+            }
+        })
+        .catch(error => console.error('Error fetching fan state:', error));
 }
 
 // Call this function when the page loads to check the initial fan state
-window.onload = function() {
+window.onload = function () {
     updateFanState();
     updateLEDState();
 };
@@ -116,29 +116,48 @@ const humidityGauge = new JustGage({
     label: "Humidity",
     gaugeWidthScale: 0.6,
     levelColors: ["#2196f3", "#4caf50", "#ff9800"]
-}); 
+});
 
 // Function to update the gauge values
 function updateSensorData() {
     fetch('/read-sensor')
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.temperature && data.humidity) {
-            temperatureGauge.refresh(data.temperature);
-            humidityGauge.refresh(data.humidity);
-        } else {
-            console.error("Failed to fetch sensor data.");
-        }
-    })
-    .catch(error => {
-        console.error('There was a problem with the fetch operation:', error);
-    });
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.temperature && data.humidity) {
+                temperatureGauge.refresh(data.temperature);
+                humidityGauge.refresh(data.humidity);
+            } else {
+                console.error("Failed to fetch sensor data.");
+            }
+        })
+        .catch(error => {
+            console.error('There was a problem with the fetch operation:', error);
+        });
 }
 
 // Set an interval to update sensor data every 5 seconds
 setInterval(updateSensorData, 5000);
+
+document.getElementById('rssi-form').addEventListener('submit', async function (event) {
+    event.preventDefault()
+
+    const threshold = document.getElementById('rssi-threshold').value
+    try {
+        const response = await fetch(`/devices?threshold=${threshold}`)
+        const data = await response.json()
+
+        if (data.error) {
+            document.getElementById('device-count').textContent = 'Error: ' + data.error
+        } else {
+            document.getElementById('device-count').textContent = `Devices Found: ${data.count}`
+        }
+    } catch (error) {
+        console.error('Error fetching data:', error)
+        document.getElementById('device-count').textContent = 'Error fetching data'
+    }
+})
